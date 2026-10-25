@@ -1,0 +1,36 @@
+{
+  "nodes": [
+    {"id": "entrance", "name": "المدخل الرئيسي (Drop Off)", "x": 0, "y": 50},
+    {"id": "pickup", "name": "Pick Up", "x": 0, "y": 75},
+    {"id": "hall", "name": "الصالة الرئيسية", "x": 30, "y": 50, "dest": false},
+    {"id": "kids", "name": "Kids Play Area", "x": 15, "y": 30},
+    {"id": "seating", "name": "منطقة الجلوس", "x": 20, "y": 68},
+    {"id": "duty_free", "name": "Duty Free", "x": 35, "y": 35},
+    {"id": "security", "name": "Security Screening", "x": 45, "y": 15},
+    {"id": "baggage", "name": "Baggage Reclaim 2", "x": 55, "y": 30},
+    {"id": "atm", "name": "Alrajhi Bank ATM", "x": 65, "y": 42},
+    {"id": "passport", "name": "Passport", "x": 70, "y": 18},
+    {"id": "fast_track", "name": "Fast Track", "x": 85, "y": 40},
+    {"id": "e_gate", "name": "Passport E-Gate", "x": 100, "y": 38},
+    {"id": "desk", "name": "Passenger Transfer Desk", "x": 100, "y": 22},
+    {"id": "toilet", "name": "Accessible Toilet", "x": 95, "y": 50},
+    {"id": "junction", "name": "ممر البوابات", "x": 75, "y": 58, "dest": false},
+    {"id": "a8", "name": "بوابة A8", "x": 62, "y": 68},
+    {"id": "b9", "name": "بوابة B9", "x": 75, "y": 68},
+    {"id": "c10", "name": "بوابة C10", "x": 88, "y": 68},
+    {"id": "d12", "name": "بوابة D12", "x": 101, "y": 68},
+    {"id": "meed", "name": "Meed Vending Machine", "x": 70, "y": 80},
+    {"id": "exit", "name": "Emergency Exit", "x": 115, "y": 58}
+  ],
+  "edges": [
+    ["entrance", "hall"], ["entrance", "pickup"], ["pickup", "seating"],
+    ["hall", "seating"], ["hall", "kids"], ["hall", "duty_free"],
+    ["duty_free", "security"], ["duty_free", "baggage"], ["hall", "atm"],
+    ["baggage", "atm"], ["baggage", "passport"], ["security", "passport"],
+    ["atm", "fast_track"], ["atm", "junction"], ["passport", "desk"],
+    ["fast_track", "e_gate"], ["fast_track", "toilet"], ["e_gate", "desk"],
+    ["toilet", "junction"], ["toilet", "exit"], ["junction", "a8"],
+    ["junction", "b9"], ["junction", "c10"], ["junction", "d12"],
+    ["b9", "meed"], ["d12", "exit"]
+  ]
+}
