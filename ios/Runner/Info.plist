@@ -47,8 +47,15 @@
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	
-	<!-- 🛑 الإذن الأساسي لتشغيل كاميرا الواقع المعزز على الآيفون -->
+	<!-- الإذن الأساسي لتشغيل كاميرا الواقع المعزز على الآيفون -->
 	<key>NSCameraUsageDescription</key>
 	<string>نحتاج إلى الوصول للكاميرا لتفعيل تجربة الواقع المعزز في الرحلة</string>
+
+	<!-- متطلبات أجهزة أبل للـ ARKit -->
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arkit</string>
+	</array>
 </dict>
 </plist>
+
