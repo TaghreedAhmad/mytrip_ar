@@ -22,4 +22,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/airport_map.json
-    
+    - assets/arrow.gltf
