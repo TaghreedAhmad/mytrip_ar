@@ -12,11 +12,16 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 import 'pathfinder.dart';
 
 const String kArrowModelUrl =
-    'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/Duck/glTF-Binary/Duck.glb';
+    'https://github.com/TaghreedAhmad/mytrip_ar/raw/main/assets/arrow.glb';
+
+// وضع التجربة: المسار كله ~10 أمتار
+// للمطار الحقيقي: kScale = 1.0 و kSpacing = 2.0
+const double kScale = 0.1;
+const double kSpacing = 0.5;
 
 class ARViewScreen extends StatefulWidget {
   final List<MapNode> path;
-  const ARViewScreen({Key? key, required this.path}) : super(key: key);
+  const ARViewScreen({super.key, required this.path});
 
   @override
   State<ARViewScreen> createState() => _ARViewScreenState();
@@ -106,22 +111,22 @@ class _ARViewScreenState extends State<ARViewScreen> {
 
     final cam = pose.getTranslation();
     final zAxis = pose.getColumn(2);
-    var fwd = vm.Vector2(-zAxis.x, -zAxis.z)..normalize();
+    final fwd = vm.Vector2(-zAxis.x, -zAxis.z)..normalize();
     final right = vm.Vector2(-fwd.y, fwd.x);
 
     final p = widget.path;
     final start = vm.Vector2(p.first.x, p.first.y);
-    var mapFwd = vm.Vector2(p[1].x - p[0].x, p[1].y - p[0].y)..normalize();
+    final mapFwd = vm.Vector2(p[1].x - p[0].x, p[1].y - p[0].y)..normalize();
     final mapRight = vm.Vector2(-mapFwd.y, mapFwd.x);
 
     vm.Vector2 toWorld(double mx, double my) {
-      final d = vm.Vector2(mx, my) - start;
+      final d = (vm.Vector2(mx, my) - start) * kScale;
       final a = d.dot(mapRight);
       final b = d.dot(mapFwd);
       return vm.Vector2(cam.x, cam.z) + right * a + fwd * b;
     }
 
-    const spacing = 2.0;
+    const spacing = kSpacing;
     int count = 0;
 
     for (int i = 0; i < p.length - 1 && count < 40; i++) {
@@ -138,7 +143,7 @@ class _ARViewScreenState extends State<ARViewScreen> {
         final node = ARNode(
           type: NodeType.webGLB,
           uri: kArrowModelUrl,
-          scale: vm.Vector3(0.15, 0.15, 0.15),
+          scale: vm.Vector3(0.4, 0.4, 0.4),
           position: vm.Vector3(pos.x, cam.y - 1.2, pos.y),
           eulerAngles: vm.Vector3(0, yaw, 0),
         );
