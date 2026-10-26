@@ -12,7 +12,7 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 import 'pathfinder.dart';
 
 const String kArrowModelUrl =
-    'https://github.com/TaghreedAhmad/mytrip_ar/raw/main/assets/arrow.gltf;
+    'https://github.com/TaghreedAhmad/mytrip_ar/raw/main/assets/arrow.gltf';
 
 // وضع التجربة: المسار كله ~10 أمتار
 // للمطار الحقيقي: kScale = 1.0 و kSpacing = 2.0
