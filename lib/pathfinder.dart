@@ -1,3 +1,4 @@
+// lib/pathfinder.dart
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart';
@@ -30,8 +31,11 @@ class AirportGraph {
       g.adj[n['id']] = [];
     }
     for (final e in data['edges']) {
-      g.adj[e[0]]!.add(e[1]);
-      g.adj[e[1]]!.add(e[0]);
+      if (e is! List || e.length != 2) continue;
+      final a = e[0], b = e[1];
+      if (!g.nodes.containsKey(a) || !g.nodes.containsKey(b)) continue;
+      g.adj[a]!.add(b);
+      g.adj[b]!.add(a);
     }
     return g;
   }
@@ -40,6 +44,9 @@ class AirportGraph {
       sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
 
   List<MapNode>? shortestPath(String from, String to) {
+    if (!nodes.containsKey(from) || !nodes.containsKey(to)) return null;
+    if (from == to) return [nodes[from]!];
+
     final dist = <String, double>{for (final k in nodes.keys) k: double.infinity};
     final prev = <String, String>{};
     final todo = nodes.keys.toSet();
