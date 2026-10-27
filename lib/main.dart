@@ -7,7 +7,7 @@ void main() {
 }
 
 class MyTripARApp extends StatelessWidget {
-  const MyTripARApp({Key? key}) : super(key: key);
+  const MyTripARApp({super.key});
 
   @override
   Widget build(BuildContext context) {
