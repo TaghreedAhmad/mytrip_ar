@@ -79,7 +79,7 @@ class _DestinationScreenState extends State<DestinationScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: DropdownButtonFormField<String>(
-              value: startId,
+              initialValue: startId,
               decoration: const InputDecoration(labelText: 'أنت الحين عند'),
               items: places
                   .map((n) => DropdownMenuItem(value: n.id, child: Text(n.name)))

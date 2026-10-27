@@ -1,5 +1,7 @@
 // lib/ar_view_screen.dart
+import 'dart:io' show Platform;
 import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:ar_flutter_plugin/ar_flutter_plugin.dart';
 import 'package:ar_flutter_plugin/datatypes/config_planedetection.dart';
@@ -10,13 +12,13 @@ import 'package:ar_flutter_plugin/managers/ar_object_manager.dart';
 import 'package:ar_flutter_plugin/managers/ar_anchor_manager.dart';
 import 'package:ar_flutter_plugin/managers/ar_location_manager.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
+import 'arrow_plan.dart';
+import 'path_preview.dart';
 import 'pathfinder.dart';
 
-// وضع التجربة: المسار كله ~10 أمتار
-// للمطار الحقيقي: kScale = 1.0 و kSpacing = 2.0
-const double kScale = 0.1;
-const double kSpacing = 0.5;
-const int kMaxArrows = 40;
+/// ARKit و ARCore يشتغلون على جوال حقيقي فقط.
+bool get deviceSupportsAr =>
+    !kIsWeb && (Platform.isIOS || Platform.isAndroid);
 
 class ARViewScreen extends StatefulWidget {
   final List<MapNode> path;
@@ -31,7 +33,7 @@ class _ARViewScreenState extends State<ARViewScreen> {
   ARObjectManager? arObjectManager;
   final List<ARNode> placed = [];
   bool busy = false;
-  String status = 'وجّه الجوال باتجاه الممر ثم اضغط "ابدأ"';
+  String status = 'اسمح بالكاميرا، حرّك الجوال ببطء، ثم اضغط "ابدأ"';
 
   @override
   void dispose() {
@@ -45,6 +47,9 @@ class _ARViewScreenState extends State<ARViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!deviceSupportsAr) {
+      return PathPreview(path: widget.path);
+    }
     final dest = widget.path.last.name;
     return Scaffold(
       appBar: AppBar(title: Text('إلى: $dest')),
@@ -53,6 +58,11 @@ class _ARViewScreenState extends State<ARViewScreen> {
           ARView(
             onARViewCreated: onARViewCreated,
             planeDetectionConfig: PlaneDetectionConfig.horizontal,
+            permissionPromptDescription:
+                'لازم تسمح للكاميرا عشان الأسهم تظهر قدامك',
+            permissionPromptButtonText: 'السماح بالكاميرا',
+            permissionPromptParentalRestriction:
+                'الكاميرا مقفلة من إعدادات الجهاز',
           ),
           Positioned(
             bottom: 30,
@@ -99,6 +109,7 @@ class _ARViewScreenState extends State<ARViewScreen> {
       handleTaps: false,
     );
     arObjectManager!.onInitialize();
+    _setStatus('حرّك الجوال ببطء لين تثبت الصورة، ثم اضغط "ابدأ"');
   }
 
   Future<void> placeArrows() async {
@@ -111,7 +122,17 @@ class _ARViewScreenState extends State<ARViewScreen> {
     setState(() => busy = true);
 
     try {
-      final pose = await arSessionManager?.getCameraPose();
+      if (arSessionManager == null) {
+        _setStatus('اسمح بالكاميرا أولاً من الزر في وسط الشاشة');
+        return;
+      }
+
+      vm.Matrix4? pose;
+      for (var attempt = 0; attempt < 20; attempt++) {
+        pose = await arSessionManager!.getCameraPose();
+        if (pose != null) break;
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+      }
       if (pose == null) {
         _setStatus('الكاميرا مو جاهزة، حرك الجهاز شوي وجرب');
         return;
