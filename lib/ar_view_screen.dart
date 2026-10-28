@@ -17,8 +17,8 @@ import 'path_preview.dart';
 import 'pathfinder.dart';
 
 /// ARKit و ARCore يشتغلون على جوال حقيقي فقط.
-bool get deviceSupportsAr =>
-    !kIsWeb && (Platform.isIOS || Platform.isAndroid);
+///
+bool get deviceSupportsAr => !kIsWeb && (Platform.isIOS || Platform.isAndroid);
 
 class ARViewScreen extends StatefulWidget {
   final List<MapNode> path;
