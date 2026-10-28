@@ -178,7 +178,7 @@ class _ARViewScreenState extends State<ARViewScreen> {
           final node = ARNode(
             type: NodeType.localGLTF2,
             uri: 'assets/arrow.gltf',
-            scale: vm.Vector3(0.4, 0.4, 0.4),
+            scale: vm.Vector3(kArrowScale, kArrowScale, kArrowScale),
             position: vm.Vector3(pos.x, cam.y - 1.2, pos.y),
             eulerAngles: vm.Vector3(0, yaw, 0),
           );

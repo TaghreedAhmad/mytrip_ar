@@ -9,6 +9,10 @@ const double kScale = 0.1;
 const double kSpacing = 0.5;
 const int kMaxArrows = 40;
 
+// طول نموذج السهم 1م. الإضافة على iOS تصغّر النماذج المحلية ×0.01،
+// فالقيمة 30 تعطيه طولاً 30سم وعرضاً 18سم: واضح من الجوال وأقصر من المسافة بين الأسهم.
+const double kArrowScale = 30;
+
 /// مواقع الأسهم على خريطة المطار، بنفس تباعد شاشة الواقع المعزز.
 List<Offset> planArrowPositions(List<MapNode> path) {
   final arrows = <Offset>[];
