@@ -17,9 +17,7 @@ import 'pathfinder.dart';
 import 'model_builder.dart';
 
 /// الجزء اللي تبين تعرضينه: ضعي هنا معرّفات (id) من airport_map.json
-const Set<String> kRegionIds = {
-  'junction', 'a8', 'b9', 'c10', 'd12', 'meed', 'exit', 'toilet',
-};
+const Set<String> kRegionIds = {'passport', 'desk', 'e_gate', 'fast_track', 'baggage', 'security'};
 
 class ModelARScreen extends StatefulWidget {
   const ModelARScreen({super.key});
