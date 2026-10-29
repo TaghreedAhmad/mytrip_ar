@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'pathfinder.dart';
 import 'ar_view_screen.dart';
+import 'qr_scan_screen.dart';
 
 class DestinationScreen extends StatefulWidget {
   const DestinationScreen({super.key});
@@ -42,6 +43,32 @@ class _DestinationScreenState extends State<DestinationScreen> {
     }
   }
 
+  void _msg(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  // يمسح الباركود ويحدد مكانك الحالي
+  Future<void> _scan() async {
+    final g = graph;
+    if (g == null) return;
+
+    final raw = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const QrScanScreen()),
+    );
+    if (raw == null || !mounted) return;
+
+    final text = raw.trim();
+    final id = text.startsWith('mytrip:') ? text.substring(7) : text;
+
+    if (!g.nodes.containsKey(id)) {
+      _msg('باركود غير معروف: $text');
+      return;
+    }
+    setState(() => startId = id);
+    _msg('أنت الحين عند ${g.nodes[id]!.name}');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (error != null) {
@@ -72,21 +99,41 @@ class _DestinationScreenState extends State<DestinationScreen> {
     }
     final places = g.nodes.values.where((n) => n.isDestination).toList();
 
+    // لو الباركود لنقطة مو وجهة (مثل الممر)، نضيفها للقائمة عشان ما يصير خطأ
+    final startItems = [...places];
+    final cur = startId == null ? null : g.nodes[startId!];
+    if (cur != null && !startItems.any((n) => n.id == cur.id)) {
+      startItems.add(cur);
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('وين تبي تروح؟')),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: DropdownButtonFormField<String>(
               value: startId,
               decoration: const InputDecoration(labelText: 'أنت الحين عند'),
-              items: places
-                  .map((n) => DropdownMenuItem(value: n.id, child: Text(n.name)))
+              items: startItems
+                  .map((n) =>
+                      DropdownMenuItem(value: n.id, child: Text(n.name)))
                   .toList(),
               onChanged: (v) => setState(() => startId = v),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _scan,
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('امسحي الباركود لتحديد مكانك'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           Expanded(
             child: ListView(
               children: places
@@ -97,13 +144,10 @@ class _DestinationScreenState extends State<DestinationScreen> {
                         trailing: const Icon(Icons.navigation),
                         onTap: () {
                           final s = startId;
-                          final path = s == null ? null : g.shortestPath(s, n.id);
+                          final path =
+                              s == null ? null : g.shortestPath(s, n.id);
                           if (path == null || path.length < 2) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('ما فيه مسار بين النقطتين'),
-                              ),
-                            );
+                            _msg('ما فيه مسار بين النقطتين');
                             return;
                           }
                           Navigator.push(
