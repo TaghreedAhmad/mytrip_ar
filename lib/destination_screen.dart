@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'pathfinder.dart';
 import 'ar_view_screen.dart';
 import 'qr_scan_screen.dart';
+import 'model_ar_screen.dart';
 
 class DestinationScreen extends StatefulWidget {
   const DestinationScreen({super.key});
