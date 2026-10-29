@@ -134,6 +134,20 @@ class _DestinationScreenState extends State<DestinationScreen> {
               ),
             ),
           ),
+                    Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ModelARScreen()),
+                ),
+                icon: const Icon(Icons.view_in_ar),
+                label: const Text('عرض نموذج المطار'),
+              ),
+            ),
+          ),
           const SizedBox(height: 8),
           Expanded(
             child: ListView(
