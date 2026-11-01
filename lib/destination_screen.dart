@@ -114,7 +114,7 @@ class _DestinationScreenState extends State<DestinationScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: DropdownButtonFormField<String>(
-              value: startId,
+              initialValue: startId,
               decoration: const InputDecoration(labelText: 'أنت الحين عند'),
               items: startItems
                   .map((n) =>

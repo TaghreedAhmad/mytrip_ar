@@ -1,4 +1,5 @@
 // lib/ar_view_screen.dart
+import 'dart:io' show Platform;
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,13 +12,13 @@ import 'package:ar_flutter_plugin/managers/ar_object_manager.dart';
 import 'package:ar_flutter_plugin/managers/ar_anchor_manager.dart';
 import 'package:ar_flutter_plugin/managers/ar_location_manager.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
+import 'arrow_plan.dart';
+import 'path_preview.dart';
 import 'pathfinder.dart';
 
-// وضع التجربة: المسار كله ~10 أمتار
-// للمطار الحقيقي: kScale = 1.0 و kSpacing = 2.0
-const double kScale = 0.1;
-const double kSpacing = 0.5;
-const int kMaxArrows = 40;
+/// ARKit و ARCore يشتغلون على جوال حقيقي فقط.
+///
+bool get deviceSupportsAr => !kIsWeb && (Platform.isIOS || Platform.isAndroid);
 
 // حجم السهم (كبّرناه من 0.4 إلى 1.0)
 const double kArrowScale = 1.0;
@@ -52,6 +53,9 @@ class _ARViewScreenState extends State<ARViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!deviceSupportsAr) {
+      return PathPreview(path: widget.path);
+    }
     final dest = widget.path.last.name;
     return Scaffold(
       appBar: AppBar(title: Text('إلى: $dest')),
@@ -60,6 +64,11 @@ class _ARViewScreenState extends State<ARViewScreen> {
           ARView(
             onARViewCreated: onARViewCreated,
             planeDetectionConfig: PlaneDetectionConfig.horizontal,
+            permissionPromptDescription:
+                'لازم تسمح للكاميرا عشان الأسهم تظهر قدامك',
+            permissionPromptButtonText: 'السماح بالكاميرا',
+            permissionPromptParentalRestriction:
+                'الكاميرا مقفلة من إعدادات الجهاز',
           ),
           Positioned(
             bottom: 30,
@@ -127,6 +136,7 @@ class _ARViewScreenState extends State<ARViewScreen> {
       handleTaps: false,
     );
     arObjectManager!.onInitialize();
+    _setStatus('حرّك الجوال ببطء لين تثبت الصورة، ثم اضغط "ابدأ"');
   }
 
   /// اتجاه الكاميرا على الأرض (أمام / يمين)
