@@ -1,7 +1,7 @@
 // lib/ar_view_screen.dart
 import 'dart:io' show Platform;
 import 'dart:math';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ar_flutter_plugin/ar_flutter_plugin.dart';
 import 'package:ar_flutter_plugin/datatypes/config_planedetection.dart';
@@ -20,6 +20,11 @@ import 'pathfinder.dart';
 ///
 bool get deviceSupportsAr => !kIsWeb && (Platform.isIOS || Platform.isAndroid);
 
+// حجم السهم (كبّرناه من 0.4 إلى 1.0)
+const double kArrowScale = 1.0;
+// كم متر تحت الكاميرا ينحط السهم
+const double kFloorOffset = 1.2;
+
 class ARViewScreen extends StatefulWidget {
   final List<MapNode> path;
   const ARViewScreen({super.key, required this.path});
@@ -33,7 +38,7 @@ class _ARViewScreenState extends State<ARViewScreen> {
   ARObjectManager? arObjectManager;
   final List<ARNode> placed = [];
   bool busy = false;
-  String status = 'اسمح بالكاميرا، حرّك الجوال ببطء، ثم اضغط "ابدأ"';
+  String status = 'حرّكي الجوال ببطء على الأرض شوي، ثم اضغطي "ابدأ"';
 
   @override
   void dispose() {
@@ -42,6 +47,7 @@ class _ARViewScreenState extends State<ARViewScreen> {
   }
 
   void _setStatus(String s) {
+    debugPrint('[AR] $s');
     if (mounted) setState(() => status = s);
   }
 
@@ -81,10 +87,31 @@ class _ARViewScreenState extends State<ARViewScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: busy ? null : placeArrows,
-                  icon: const Icon(Icons.navigation),
-                  label: const Text('ابدأ'),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: busy ? null : placeArrows,
+                      icon: const Icon(Icons.navigation),
+                      label: const Text('ابدأ'),
+                    ),
+                    OutlinedButton(
+                      onPressed: busy ? null : () => testNode(duck: false),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white70,
+                      ),
+                      child: const Text('اختبار سهم'),
+                    ),
+                    OutlinedButton(
+                      onPressed: busy ? null : () => testNode(duck: true),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white70,
+                      ),
+                      child: const Text('اختبار بطة'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -105,11 +132,70 @@ class _ARViewScreenState extends State<ARViewScreen> {
     arSessionManager!.onInitialize(
       showFeaturePoints: false,
       showPlanes: false,
-      showWorldOrigin: false,
+      showWorldOrigin: true, // يظهر محاور الأصل، مفيد للتأكد إن AR شغال
       handleTaps: false,
     );
     arObjectManager!.onInitialize();
     _setStatus('حرّك الجوال ببطء لين تثبت الصورة، ثم اضغط "ابدأ"');
+  }
+
+  /// اتجاه الكاميرا على الأرض (أمام / يمين)
+  ({vm.Vector3 cam, vm.Vector2 fwd, vm.Vector2 right})? _basis(
+      vm.Matrix4? pose) {
+    if (pose == null) return null;
+    final cam = pose.getTranslation();
+    final zAxis = pose.getColumn(2);
+    final fwd = vm.Vector2(-zAxis.x, -zAxis.z);
+    if (fwd.length == 0) return null;
+    fwd.normalize();
+    final right = vm.Vector2(-fwd.y, fwd.x);
+    return (cam: cam, fwd: fwd, right: right);
+  }
+
+  /// اختبار: ينحط سهم (أو بطة) واحد قدامك بمتر ونص
+  /// لو ظهرت البطة وما ظهر السهم: المشكلة في ملف arrow.gltf
+  /// لو ما ظهرت ولا وحدة: المشكلة في التتبع أو المكتبة نفسها
+  Future<void> testNode({required bool duck}) async {
+    setState(() => busy = true);
+    try {
+      final pose = await arSessionManager?.getCameraPose();
+      final b = _basis(pose);
+      if (b == null) {
+        _setStatus('الكاميرا مو جاهزة، حرّكي الجوال شوي وجربي');
+        return;
+      }
+
+      final pos = vm.Vector2(b.cam.x, b.cam.z) + b.fwd * 1.5;
+      final node = duck
+          ? ARNode(
+              type: NodeType.webGLB,
+              uri:
+                  'https://github.com/KhronosGroup/glTF-Sample-Models/raw/main/2.0/Duck/glTF-Binary/Duck.glb',
+              scale: vm.Vector3(0.2, 0.2, 0.2),
+              position: vm.Vector3(pos.x, b.cam.y - 1.0, pos.y),
+            )
+          : ARNode(
+              type: NodeType.localGLTF2,
+              uri: 'assets/arrow.gltf',
+              scale: vm.Vector3(kArrowScale, kArrowScale, kArrowScale),
+              position: vm.Vector3(pos.x, b.cam.y - 1.0, pos.y),
+            );
+
+      final ok = await arObjectManager?.addNode(node);
+      debugPrint('[AR] test ${duck ? "duck" : "arrow"} addNode => $ok '
+          'pos=(${pos.x}, ${b.cam.y - 1.0}, ${pos.y})');
+      if (ok == true) {
+        placed.add(node);
+        _setStatus(
+            'تم إضافة ${duck ? "البطة" : "السهم"}. وجّهي الكاميرا للأرض قدامك بمتر ونص.');
+      } else {
+        _setStatus('addNode رجع $ok، فشل تحميل ${duck ? "البطة" : "السهم"}');
+      }
+    } catch (e) {
+      _setStatus('خطأ في الاختبار: $e');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
   }
 
   Future<void> placeArrows() async {
@@ -122,18 +208,9 @@ class _ARViewScreenState extends State<ARViewScreen> {
     setState(() => busy = true);
 
     try {
-      if (arSessionManager == null) {
-        _setStatus('اسمح بالكاميرا أولاً من الزر في وسط الشاشة');
-        return;
-      }
-
-      vm.Matrix4? pose;
-      for (var attempt = 0; attempt < 20; attempt++) {
-        pose = await arSessionManager!.getCameraPose();
-        if (pose != null) break;
-        await Future<void>.delayed(const Duration(milliseconds: 250));
-      }
-      if (pose == null) {
+      final pose = await arSessionManager?.getCameraPose();
+      final basis = _basis(pose);
+      if (basis == null) {
         _setStatus('الكاميرا مو جاهزة، حرك الجهاز شوي وجرب');
         return;
       }
@@ -143,10 +220,9 @@ class _ARViewScreenState extends State<ARViewScreen> {
       }
       placed.clear();
 
-      final cam = pose.getTranslation();
-      final zAxis = pose.getColumn(2);
-      final fwd = vm.Vector2(-zAxis.x, -zAxis.z)..normalize();
-      final right = vm.Vector2(-fwd.y, fwd.x);
+      final cam = basis.cam;
+      final fwd = basis.fwd;
+      final right = basis.right;
 
       final start = vm.Vector2(p.first.x, p.first.y);
       final mapFwd = vm.Vector2(p[1].x - p[0].x, p[1].y - p[0].y)..normalize();
@@ -179,10 +255,14 @@ class _ARViewScreenState extends State<ARViewScreen> {
             type: NodeType.localGLTF2,
             uri: 'assets/arrow.gltf',
             scale: vm.Vector3(kArrowScale, kArrowScale, kArrowScale),
-            position: vm.Vector3(pos.x, cam.y - 1.2, pos.y),
+            position: vm.Vector3(pos.x, cam.y - kFloorOffset, pos.y),
             eulerAngles: vm.Vector3(0, yaw, 0),
           );
           final ok = await arObjectManager?.addNode(node);
+          debugPrint('[AR] arrow ${placed.length} addNode => $ok '
+              'pos=(${pos.x.toStringAsFixed(2)}, '
+              '${(cam.y - kFloorOffset).toStringAsFixed(2)}, '
+              '${pos.y.toStringAsFixed(2)}) yaw=${yaw.toStringAsFixed(2)}');
           if (ok == true) {
             placed.add(node);
           } else {
@@ -194,9 +274,10 @@ class _ARViewScreenState extends State<ARViewScreen> {
       }
 
       if (placed.isEmpty) {
-        _setStatus('ما انحطت أسهم ($failed فشلت). تأكد من ملف السهم.');
+        _setStatus('ما انحطت أسهم ($failed فشلت). جربي زر "اختبار سهم".');
       } else {
-        _setStatus('انحط ${placed.length} سهم، ماشي ورا الأسهم 👇');
+        _setStatus(
+            'انحط ${placed.length} سهم ($failed فشلت). انزلي بالكاميرا للأرض 👇');
       }
     } catch (e) {
       _setStatus('صار خطأ: $e');
