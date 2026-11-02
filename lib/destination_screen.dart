@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'pathfinder.dart';
 import 'ar_view_screen.dart';
-import 'qr_scan_screen.dart';
 import 'model_ar_screen.dart';
 
 class DestinationScreen extends StatefulWidget {
@@ -46,28 +45,6 @@ class _DestinationScreenState extends State<DestinationScreen> {
 
   void _msg(String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
-
-  // يمسح الباركود ويحدد مكانك الحالي
-  Future<void> _scan() async {
-    final g = graph;
-    if (g == null) return;
-
-    final raw = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(builder: (_) => const QrScanScreen()),
-    );
-    if (raw == null || !mounted) return;
-
-    final text = raw.trim();
-    final id = text.startsWith('mytrip:') ? text.substring(7) : text;
-
-    if (!g.nodes.containsKey(id)) {
-      _msg('باركود غير معروف: $text');
-      return;
-    }
-    setState(() => startId = id);
-    _msg('أنت الحين عند ${g.nodes[id]!.name}');
   }
 
   @override
@@ -117,24 +94,13 @@ class _DestinationScreenState extends State<DestinationScreen> {
               initialValue: startId,
               decoration: const InputDecoration(labelText: 'أنت الحين عند'),
               items: startItems
-                  .map((n) =>
-                      DropdownMenuItem(value: n.id, child: Text(n.name)))
+                  .map(
+                      (n) => DropdownMenuItem(value: n.id, child: Text(n.name)))
                   .toList(),
               onChanged: (v) => setState(() => startId = v),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _scan,
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('امسحي الباركود لتحديد مكانك'),
-              ),
-            ),
-          ),
-                    Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(
               width: double.infinity,

@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   ar_flutter_plugin: ^0.7.2
+  path_provider: ^2.1.5
   vector_math: ^2.1.4
 
 dev_dependencies:

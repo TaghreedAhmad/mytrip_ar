@@ -20,9 +20,7 @@ import 'pathfinder.dart';
 ///
 bool get deviceSupportsAr => !kIsWeb && (Platform.isIOS || Platform.isAndroid);
 
-// حجم السهم (كبّرناه من 0.4 إلى 1.0)
-const double kArrowScale = 1.0;
-// كم متر تحت الكاميرا ينحط السهم
+// كم متر تحت الكاميرا ينحط السهم. حجم السهم نفسه في arrow_plan.dart.
 const double kFloorOffset = 1.2;
 
 class ARViewScreen extends StatefulWidget {
@@ -132,7 +130,7 @@ class _ARViewScreenState extends State<ARViewScreen> {
     arSessionManager!.onInitialize(
       showFeaturePoints: false,
       showPlanes: false,
-      showWorldOrigin: true, // يظهر محاور الأصل، مفيد للتأكد إن AR شغال
+      showWorldOrigin: false,
       handleTaps: false,
     );
     arObjectManager!.onInitialize();
